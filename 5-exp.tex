@@ -1,4 +1,24 @@
 \section{Experimental Results}
 \label{section:exp}
 \subsection{Evaluation of Baseline Methods}
-\label{section:exp:baseline}
+\paragraph{Current status.}
+No measurements are available at proposal submission. We will first use approximately 100--200 sentence examples from development data to validate alignment, source matching, input length, class parsing, runtime, and the four conditions. The pilot is for feasibility and configuration selection, not evidence of superiority. Held-out test examples remain unused until the settings are frozen.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Planned reporting format. All measurements are pending. Per-class scores will be reported separately.}
+\begin{tabularx}{\linewidth}{@{}Xccc@{}}
+\toprule
+Method & Macro-F1 & Mean input tokens & Mean total latency \\
+\midrule
+B0: No evidence & Pending & Pending & Pending \\
+B1: Leading context & Pending & Pending & Pending \\
+B2: BM25 & Pending & Pending & Pending \\
+B3: BM25 + reranking & Pending & Pending & Pending \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Planned analysis and completion criteria.}
+We will emphasize B2--B1 and B3--B2 differences, report all four classes, and relate any gains to additional processing cost. Error analysis will distinguish missing candidate evidence, ranking failures, and incorrect classification despite relevant evidence, particularly supported statements predicted as unverifiable. Null and negative gains will be reported using the same metrics. The minimum planned deliverable includes one classifier, one language subset, all four conditions, and a small evidence audit. If reranker deployment is blocked, we will complete B0--B2 first and disclose B3 as incomplete rather than substitute unreported settings. The proposal deadline is October 23; the schedule for full experiments will follow the course's final-project deadline.

@@ -1,5 +1,3 @@
-\section{Methodology (Optional)}
-\label{section:algorithm}
-Please use one paragraph to explain your high-level idea of the solution.
-If possible, draw an illustrative diagram to describe your high-level idea.
-
+\section{Methodology}
+\label{section:method}
+Our pipeline is \emph{question + target answer sentence + associated documents $\rightarrow$ alignment and chunking $\rightarrow$ evidence selection $\rightarrow$ fixed four-label classifier $\rightarrow$ evaluation}. We first validate ANAH alignment and label parsing, then implement B0--B2 and add reranking for B3. Except for evidence, the classifier receives identical question and answer context in every condition. We compare B2 against B1 to study lexical selection and B3 against B2 to study reranking, inspecting candidate absence, ranking errors, and classification failures despite relevant evidence. Since evidence changes the classifier's input distribution, results describe complete fixed-classifier pipelines rather than a pure causal measure of retrieval quality. The configuration is selected from a small development-only set and frozen before final evaluation; additional detector models and fine-tuning are outside the minimum scope.

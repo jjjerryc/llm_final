@@ -1,10 +1,10 @@
 \section{Expected Contributions of Each Team Member}
-Please describe how you would collaborate with each other and specifically what each member would contribute to this project.
+\label{section:contribution}
+The following division is proposed for a four-member team. Names and responsibilities will be confirmed by the team before submission.
 \begin{itemize}
-    \item Name of Member 1:
-    \item Name of Member 2:
-    \item Name of Member 3:
-    \item Name of Member 4:
+\item \textbf{Member 1: Classifier and inference.} Set up Qwen2.5-3B-Instruct, class descriptions, prompts, deterministic label parsing, and consistent inference settings.
+\item \textbf{Member 2: Dataset and splits.} Implement ANAH preprocessing, sentence alignment, topic-group splitting, source-duplicate checks, and data-quality records.
+\item \textbf{Member 3: Retrieval pipeline.} Implement BM25, neural reranking, shared candidate pools, evidence-budget controls, and caching.
+\item \textbf{Member 4: Evaluation and analysis.} Implement macro/per-class metrics, topic-group comparisons, evidence audits, cost measurement, error analysis, and result integration.
 \end{itemize}
-
-As you just kick off the project, it is very likely that you may need to reallocate the tasks among yourselves as you proceed. Please make sure that you  reach a consensus on the expected contributions. 
+All members contribute to literature review, cross-checking, interpretation, writing, and presentation. We will record dataset and model revisions, software dependencies, prompts, random seeds, and execution settings so that the comparison is reproducible. Existing methods and source code will be attributed, and any scope changes will be documented.

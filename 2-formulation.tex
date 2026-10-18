@@ -1,9 +1,29 @@
 \section{Problem Formulation}
-Please use 1-2 paragraphs to concisely describe your problem in a concrete way. For example:
-\begin{itemize}
-\item Describe the task setting that you consider, e.g., text classification, summarization, question answering, dialogue generation, code generation, or multi-modal reasoning.
-\item Describe the information available to the LLM, e.g., the form of input context, prompt, retrieved documents, or external knowledge sources.
-\item Specify the supervision or feedback signal available, e.g., labeled datasets, preference feedback, expert demonstrations, synthetic data, multi-task objectives, or unsupervised/self-supervised signals.
-\item Specify the optimization problem of your project (including the objective function and the constraints, if any), e.g., maximizing task accuracy, improving coherence, or balancing multiple objectives.
-\item Specify the assumptions that you may want to make, e.g., data distribution, availability of external tools, or limitations on computational resources.
-\end{itemize}
+\label{section:formulation}
+Each example contains a question $q$, a target answer sentence $s$, associated reference documents $D$, and a label $y$. We retain ANAH's four categories: \emph{No Hallucination}, \emph{Contradictory Hallucination}, \emph{Unverifiable Hallucination}, and \emph{No Fact}. A shared segmentation function produces chunks $C(D)$; strategy $R$ selects evidence $E_R$ under budget $B$. The fixed classifier predicts
+\begin{equation}
+E_R=R(q,s,C(D);B),\qquad |E_R|_{\mathrm{tokens}}\leq B,
+\qquad \hat y_R=f_\theta\bigl(\operatorname{prompt}(q,s,E_R)\bigr).
+\end{equation}
+We seek higher macro-F1 within the common evidence budget while measuring processing cost; no strategy is assumed to win. Only the associated documents are searched. Gold labels, annotated reference fragments, and corrections are excluded from inference inputs and retrieval queries. Human-reviewed labels provide evaluation supervision; the first phase does not fit classifier weights.
+
+The first-phase classifier is Qwen2.5-3B-Instruct, initially loaded in 4-bit precision on a single available GPU. We hold its checkpoint, precision, prompt, label descriptions, and decoding rules fixed across conditions. The LLM generates a category name, mapped by one deterministic parser to four predefined IDs; malformed outputs remain in the evaluation denominator and count as errors. We use greedy decoding (\texttt{do\_sample=False}) with at most 32 new tokens. If prior answer text is required to resolve references, a common inclusion rule is chosen on development data and frozen before testing. QLoRA is an optional extension only: any adapter must be fitted exclusively on training data and shared across all evidence conditions, with its provenance documented.
+
+\paragraph{Initial configuration and resource constraints.}
+The following are planned starting values, not measured hardware guarantees or dataset-defined constants. They may be adjusted during the development pilot, then frozen before held-out evaluation.
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+Setting & Initial value \\
+\midrule
+Evidence budget & At most 1,024 classifier-tokenizer tokens \\
+Document chunks & 256 tokens, with 32-token overlap \\
+BM25 candidate pool & Up to 20 chunks; use all available if fewer exist \\
+Neural reranker & \texttt{jinaai/jina-reranker-v3} \\
+Classifier batch size & 1 initially \\
+Hardware & Prefer an available RTX 3090; verify the exact RTX 4070 model and VRAM before fallback deployment \\
+\bottomrule
+\end{tabularx}
+\end{center}
+Questions and fixed instructions are counted separately from the evidence budget. Total prompt length and memory use will be checked during the pilot. Reranking and classification can run sequentially with cached evidence rather than requiring both models to reside on the GPU simultaneously.

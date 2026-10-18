@@ -1,29 +1,33 @@
 \section{Empirical Evaluation}
 \label{section:evaluation}
-Please concretely describe how you would evaluate the effectiveness of your method by completing the following two parts
-
 \subsection{Performance Metrics}
-Please write down a few key performance metrics that you plan to adopt in your evaluation.
-Typical examples in LLM settings include task accuracy, BLEU, ROUGE, METEOR, F1 score, perplexity, calibration error, diversity measures, or human evaluation scores (e.g., preference ratings, Likert-scale judgments).
-If you plan to create your own new performance metric (e.g., combining automatic scores with human preference alignment), please also justify why it is required and reasonable.
+\paragraph{Classification and cost.}
+The primary metric is macro-F1 across the four fixed labels,
+\[
+\mathrm{MacroF1}=\frac{1}{4}\sum_{k=1}^{4}F1_k.
+\]
+We set zero-division results to zero and report per-class precision, recall, F1, and sample counts, overall accuracy, the confusion matrix, and the malformed-output rate. Invalid predictions are represented by a separate sentinel, never coerced into a valid class; macro-F1 is computed over the four gold classes so invalid outputs contribute false negatives. We log actual input tokens and end-to-end latency per example, including retrieval, reranking, and classification. Component timings and one-time indexing are reported separately.
+
+\paragraph{Evidence audit.}
+On a prespecified development sample of up to 50 eligible examples, we will normalize whitespace and attempt exact alignment of each annotated reference fragment to the source text. Examples with missing or unalignable references will be counted separately. For alignable examples, we measure whether selected evidence contains the complete normalized reference fragment; partial or ambiguous cases receive manual inspection. This is a limited reference-fragment coverage analysis, not a claim that every label has a positive evidence span or that annotated fragments are exhaustive. Gold references are used only for this audit, never for normal evidence selection. The audit rule will be frozen before any analogous held-out analysis.
 
 \subsection{Baseline Methods}
-Please provide a list of the necessary baseline methods. For example:
 \begin{itemize}
-\item Baseline 1 [authors, year]: A standard fine-tuned LLM on the chosen dataset, serving as a strong supervised baseline.
-\item Baseline 2 [authors, year]: A prompting-based method that leverages few-shot in-context learning.
-\item $\cdots$
+\item \textbf{B0: Question + sentence only.} Predict without source-document evidence, measuring the performance available from question and answer-text cues alone.
+\item \textbf{B1: Leading context.} Provide the first $B$ tokens of the associated documents in a fixed source order.
+\item \textbf{B2: BM25.} Use the question and target sentence as a common query, rank source chunks with BM25 \citep{robertson2009}, and pack the highest-ranked candidates within $B$ tokens.
+\item \textbf{B3: BM25 + neural reranking.} Rerank the same BM25 candidate pool with jina-reranker-v3 \citep{wang2025jina}, then pack evidence within the same budget.
 \end{itemize}
-In the above, please use ``$\backslash$citep{...}" to add the references.
+B1--B3 share preprocessing and a maximum evidence budget. B2 and B3 share the candidate pool, allowing a focused comparison of the reranking stage. Duplicate chunks are removed before packing; a deterministic rule handles the last chunk at the budget boundary. Actual token use is reported when fewer tokens are available. B0 is an evidence-free reference, not a token-matched comparator. A reranker cannot recover evidence absent from the initial candidate pool.
 
 \subsection{Benchmark Tasks or Datasets}
-Please provide a list of the suitable benchmark tasks or datasets that you plan to use in your evaluation. For example:
-\begin{itemize}
-\item GLUE / SuperGLUE for general natural language understanding.
-\item SQuAD, Natural Questions, or HotpotQA for question answering.
-\item XSum, CNN/DailyMail for summarization.
-\item HumanEval or MBPP for code generation.
-\item TruthfulQA or HELM benchmarks for measuring alignment and robustness.
-\end{itemize}
+\paragraph{Dataset and preprocessing.}
+We use the English portion of the original ANAH release \citep{ji2024anah}, available at \url{https://huggingface.co/datasets/opencompass/anah}. It supplies topic-level records with reference documents, questions, model answers, and human-reviewed sentence annotations. We flatten nested records into aligned sentence examples and verify sentence-to-annotation correspondence. We will report usable sentence counts, topic counts, class frequencies, dataset revision, and exclusion rules after preprocessing, rather than assume that topic-record counts equal sentence counts. No private course dataset or previously trained course adapter is required.
 
-If your project is in the Dataset and Benchmark Track, then please describe the detailed procedure on how you plan to construct your datasets or benchmark tasks, such as data collection pipeline, annotation process, quality control, and evaluation protocol.
+\paragraph{Data split.}
+We first check whether reproducible original split assignments are provided. Otherwise, we construct an approximately 70/15/15 train/development/test split by topic with seed 42. Proportions apply to topic groups, not necessarily sentence counts. All documents, questions, answers, and sentences from one topic remain together; duplicated sources across topics are checked and grouped or handled using a documented common rule before finalizing the split. We record exact split and class counts. If rare classes are insufficiently represented, we resolve this at split construction, before method-specific test results are inspected.
+
+Development data are used for prompts, preprocessing, and retrieval settings; held-out test data are reserved for final scoring. Training data remain available for optional adaptation but are not used to fit weights in the prompting-only first phase. A custom split is explicitly identified and is not numerically equated with published results under different protocols.
+
+\paragraph{Comparison protocol.}
+All conditions use the same held-out examples, classifier checkpoint, input convention, and output parser. Common preprocessing failures and exclusions are documented; method-specific invalid model outputs count as errors. Gold labels remain unchanged when evidence selection fails. We report F1 differences in percentage points. If confidence intervals are computed, paired bootstrap resampling is performed by topic, keeping all sentence examples from a topic together.
