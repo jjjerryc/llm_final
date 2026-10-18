@@ -1,0 +1,29 @@
+\section{Empirical Evaluation}
+\label{section:evaluation}
+Please concretely describe how you would evaluate the effectiveness of your method by completing the following two parts
+
+\subsection{Performance Metrics}
+Please write down a few key performance metrics that you plan to adopt in your evaluation.
+Typical examples in LLM settings include task accuracy, BLEU, ROUGE, METEOR, F1 score, perplexity, calibration error, diversity measures, or human evaluation scores (e.g., preference ratings, Likert-scale judgments).
+If you plan to create your own new performance metric (e.g., combining automatic scores with human preference alignment), please also justify why it is required and reasonable.
+
+\subsection{Baseline Methods}
+Please provide a list of the necessary baseline methods. For example:
+\begin{itemize}
+\item Baseline 1 [authors, year]: A standard fine-tuned LLM on the chosen dataset, serving as a strong supervised baseline.
+\item Baseline 2 [authors, year]: A prompting-based method that leverages few-shot in-context learning.
+\item $\cdots$
+\end{itemize}
+In the above, please use ``$\backslash$citep{...}" to add the references.
+
+\subsection{Benchmark Tasks or Datasets}
+Please provide a list of the suitable benchmark tasks or datasets that you plan to use in your evaluation. For example:
+\begin{itemize}
+\item GLUE / SuperGLUE for general natural language understanding.
+\item SQuAD, Natural Questions, or HotpotQA for question answering.
+\item XSum, CNN/DailyMail for summarization.
+\item HumanEval or MBPP for code generation.
+\item TruthfulQA or HELM benchmarks for measuring alignment and robustness.
+\end{itemize}
+
+If your project is in the Dataset and Benchmark Track, then please describe the detailed procedure on how you plan to construct your datasets or benchmark tasks, such as data collection pipeline, annotation process, quality control, and evaluation protocol.
