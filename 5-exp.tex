@@ -2,3 +2,22 @@
 \label{section:exp}
 \subsection{Evaluation of Baseline Methods}
 \label{section:exp:baseline}
+\textbf{Status as of proposal submission: no measured baseline results are available yet.} The team will first establish the Qwen2.5-3B-Instruct classifier development-set baseline, verify source-paper links and PDF parsing, and test the three evidence conditions on a 200--400-example pilot from the tuning-only portion of development data, keeping the approximately 20\% paper-disjoint development holdout untouched for final scoring. The holdout split is generated using seed 42 and its exact counts will be documented. We deliberately do not insert hypothetical results in this proposal. The following table specifies our reporting format.
+
+\begin{table}[h]
+\centering
+\caption{Planned baseline reporting (all measurements pending).}
+\small
+\begin{tabular}{lccc}
+\toprule
+Method & Dev Macro F1 & Mean input tokens & Mean latency (s) \\
+\midrule
+B0: Review only & Pending & Pending & Pending \\
+B1: Leading truncation & Pending & Pending & Pending \\
+P: BM25 evidence & Pending & Pending & Pending \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Decision checkpoints.}
+Before full-scale evaluation, we must establish that (i) the baseline classifier's outputs are reproducible, (ii) review-to-paper mapping and PDF extraction work on the chosen split, and (iii) input-format differences do not invalidate the proposed comparison. We will document the evaluated sample count, configuration, and any setup changes. Dense retrieval, additional classifier architectures, and extra datasets are outside the minimum scope.

@@ -1,29 +1,32 @@
 \section{Empirical Evaluation}
 \label{section:evaluation}
-Please concretely describe how you would evaluate the effectiveness of your method by completing the following two parts
-
 \subsection{Performance Metrics}
-Please write down a few key performance metrics that you plan to adopt in your evaluation.
-Typical examples in LLM settings include task accuracy, BLEU, ROUGE, METEOR, F1 score, perplexity, calibration error, diversity measures, or human evaluation scores (e.g., preference ratings, Likert-scale judgments).
-If you plan to create your own new performance metric (e.g., combining automatic scores with human preference alignment), please also justify why it is required and reasonable.
+\paragraph{Primary metric: macro-averaged F1.}
+For class $k$, let $P_k=TP_k/(TP_k+FP_k)$ and $R_k=TP_k/(TP_k+FN_k)$, with a stated zero-division convention. We define $F1_k=2P_kR_k/(P_k+R_k)$ and $\operatorname{MacroF1}=\frac{1}{5}\sum_{k=1}^{5}F1_k$. Macro F1 is our principal metric because the five categories are imbalanced. We will additionally report per-class precision/recall/F1, overall accuracy, and a confusion matrix. For efficiency, we will log the number of input tokens and average classifier inference latency per example, excluding one-time indexing from per-query latency and reporting indexing separately.
+
+\paragraph{Quality control and comparison protocol.}
+All strategies will be evaluated on exactly the same examples with the same label mapping. We will report absolute F1 changes in percentage points; if feasible, paired bootstrap intervals over evaluation examples will quantify uncertainty. We will inspect a small, prespecified sample of retrieved passages for parsing failures and obvious evidence mismatch, but will \emph{not} call a classifier score ``evidence recall'' without passage-level evidence annotations. Test labels will not be used for prompt or retrieval tuning.
 
 \subsection{Baseline Methods}
-Please provide a list of the necessary baseline methods. For example:
 \begin{itemize}
-\item Baseline 1 [authors, year]: A standard fine-tuned LLM on the chosen dataset, serving as a strong supervised baseline.
-\item Baseline 2 [authors, year]: A prompting-based method that leverages few-shot in-context learning.
-\item $\cdots$
+\item \textbf{B0: Review Only.} Classify a review statement without manuscript evidence. This isolates performance from review-text cues.
+\item \textbf{B1: Leading-Context Truncation.} Provide the same review statement together with the first $B$ tokens extracted from its associated paper. This reflects a simple long-document handling strategy and is the main evidence-bearing baseline.
+\item \textbf{P: BM25 Evidence Selection (proposed application).} Rank chunks from the associated paper by BM25 relevance to the review statement \citep{robertson2009probabilistic} and pack the top-ranked chunks into the same $B$-token budget. The classifier and label schema are unchanged.
 \end{itemize}
-In the above, please use ``$\backslash$citep{...}" to add the references.
+If the three conditions run successfully, we may include a \emph{nonessential} dense-retrieval extension using sentence embeddings \citep{reimers2019sentence}. This extension will not be required for the minimum deliverable. Model prompts and generation settings will be controlled; class label decoding will use the same rule for all conditions.
 
 \subsection{Benchmark Tasks or Datasets}
-Please provide a list of the suitable benchmark tasks or datasets that you plan to use in your evaluation. For example:
-\begin{itemize}
-\item GLUE / SuperGLUE for general natural language understanding.
-\item SQuAD, Natural Questions, or HotpotQA for question answering.
-\item XSum, CNN/DailyMail for summarization.
-\item HumanEval or MBPP for code generation.
-\item TruthfulQA or HELM benchmarks for measuring alignment and robustness.
-\end{itemize}
+\paragraph{Primary dataset and provenance.}
+We use the provided five-class scientific peer-review hallucination classification dataset package, distributed with labeled review statements and their linked source-paper PDFs. Its files are \texttt{train.csv} (5,695 labeled statements), \texttt{dev.csv} (1,777 labeled statements), \texttt{test.csv} (1,778 statements without public labels), \texttt{classes.json}, and \texttt{paper\_evidence/\{paper\_id\}.pdf}. Review records contain \texttt{text}, \texttt{paper\_id}, and, for labeled splits, \texttt{label}. Labels 0--4 are Attribution Failure, Entity, Number, Overgeneralization, and Temporal, with respective training counts 1,910, 1,790, 249, 1,616, and 130 (total: 5,695). The training partition covers 942 distinct papers. The dataset specification describes source PDFs as approximately 40K tokens on average. We will access the data through the authorized dataset distribution and document its release/version and access permissions in the final reproducibility record; no separate public dataset identifier or license has been verified, so we make no claim of public availability. We do not identify this five-label dataset with HalluPeer.
 
-If your project is in the Dataset and Benchmark Track, then please describe the detailed procedure on how you plan to construct your datasets or benchmark tasks, such as data collection pipeline, annotation process, quality control, and evaluation protocol.
+\paragraph{Related public benchmark.}
+HalluPeer \citep{lin2026hallupeer} is cited as related literature on paper-grounded scientific-review hallucination analysis. Its taxonomy and data construction differ from the intended five-class task, so its published scores are \emph{not} used as directly comparable baseline results.
+
+\paragraph{Evaluation split and protocol.}
+Only \texttt{train.csv} is eligible for fitting the shared QLoRA classifier. Before examining strategy-specific performance, we will create a \emph{fixed} split of labeled \texttt{dev.csv} by grouping examples on \texttt{paper\_id}. With random seed 42, approximately 20\% of development examples will form a locked final evaluation subset and the remaining approximately 80\% will be used for pilot debugging and selecting the fixed retrieval/prompt parameters. The allocation will be group-disjoint and will aim to preserve all five class distributions where feasible; exact split counts and class frequencies will be recorded, rather than assumed in advance. All examples from any single paper stay in one development subset. We will audit \texttt{paper\_id} overlap between training and development and explicitly report any overlap; development-group disjointness alone does not guarantee independence from training papers. Since the supplied test set lacks accessible gold labels, it will not be used to compute local macro F1 or tune parameters. Any separately authorized external-test score will be identified as such.
+
+\paragraph{Fixed-classifier fairness and failure handling.}
+B0, B1, and P use the same model checkpoint, label definitions, output parser, review-question template, inference decoding settings, and frozen development evaluation examples. B1 and P share a maximum evidence budget of 1,024 tokens; B0 is intentionally evidence-free and is a reference rather than a token-matched comparator. Each strategy's actual prompt-token use will be reported. For any training performed, the shared adapter will use one documented training-input convention that is kept constant; differences caused by evaluation-time input-format shift will be reported as limitations, not presented as proof of better evidence retrieval. Model decoding failures count as incorrect classifications; PDF parsing failures and any exclusions will be disclosed with the same evaluation-denominator rule across strategies.
+
+\paragraph{Evaluation plan.}
+We will first process 200--400 examples from the \emph{pilot portion} of development data and run B0, B1, and BM25 using the same classifier. We will then evaluate the three locked methods once on the held-out development subset, recording its exact size and paper IDs. Where paper identifiers are available, we will inspect cross-split paper overlap to avoid overstating generalization. We will record the number of successfully parsed and evaluated examples, including any exclusions.

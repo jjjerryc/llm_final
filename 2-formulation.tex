@@ -1,9 +1,15 @@
 \section{Problem Formulation}
-Please use 1-2 paragraphs to concisely describe your problem in a concrete way. For example:
-\begin{itemize}
-\item Describe the task setting that you consider, e.g., text classification, summarization, question answering, dialogue generation, code generation, or multi-modal reasoning.
-\item Describe the information available to the LLM, e.g., the form of input context, prompt, retrieved documents, or external knowledge sources.
-\item Specify the supervision or feedback signal available, e.g., labeled datasets, preference feedback, expert demonstrations, synthetic data, multi-task objectives, or unsupervised/self-supervised signals.
-\item Specify the optimization problem of your project (including the objective function and the constraints, if any), e.g., maximizing task accuracy, improving coherence, or balancing multiple objectives.
-\item Specify the assumptions that you may want to make, e.g., data distribution, availability of external tools, or limitations on computational resources.
-\end{itemize}
+We study five-way classification of factual inconsistency types in scientific peer-review statements. Let $\mathcal{D}=\{(x_i,P_i,y_i)\}_{i=1}^{N}$, where $x_i$ is a review statement, $P_i$ is the linked source paper, and $y_i \in \mathcal{Y}$ is one of the five provided class labels. We use the dataset's original class strings and mapping without merging them with any external taxonomy. The dataset-defined labels are \textbf{Attribution Failure} (0), \textbf{Entity} (1), \textbf{Number} (2), \textbf{Overgeneralization} (3), and \textbf{Temporal} (4). Class names, descriptions, and IDs are specified in \texttt{classes.json}.
+
+A PDF extraction and segmentation function produces $\mathcal{C}(P_i)=\{c_{i1},\ldots,c_{im_i}\}$. Given a selection strategy $R$, the evidence context is $E_i=R(x_i,\mathcal{C}(P_i);B)$, with evidence length at most $B$ tokens. The LLM classifier predicts
+\begin{equation}
+\hat y_i=f_{\theta}(\operatorname{prompt}(x_i,E_i)), \qquad
+\hat y_i\in\mathcal{Y}.
+\end{equation}
+We vary only $R$, keeping the classifier checkpoint, label decoding, review prompt, test cases, and inference configuration the same. The research objective is to characterize differences in macro F1 and class-wise F1 across evidence strategies, rather than assume any particular strategy will win.
+
+\paragraph{Model configuration.}
+Our specified backbone is \textbf{\texttt{unsloth/Qwen2.5-3B-Instruct-bnb-4bit}}, with a \textbf{single QLoRA-adapted five-class classifier}. The LLM generates a category name, which is mapped to its integer ID using \texttt{classes.json}; we do not assume the availability of a conventional classification-logit head. We will use one task-adapted QLoRA checkpoint for all comparisons. If no compatible checkpoint is available, we will train a single shared adapter exclusively on the labeled training split, using a documented, fixed leading-context input recipe; all comparisons will then use that same adapter. We do \emph{not} plan to train separate models for each retrieval condition. This design measures inference-time evidence-selection performance for a fixed classifier and does not isolate the causal effect of retrieval quality from input-distribution shift. The same adapter and output-label parser will be reused in all comparisons.
+
+\paragraph{Evidence selection and budget.}
+We compare (i) no manuscript evidence (review only), (ii) the leading $B$ paper tokens, and (iii) BM25-ranked paper chunks packed in descending retrieval order until $B$ tokens are reached. The planned starting configuration is $B=1024$ \emph{evidence tokens}, 256-token chunks, and 32-token overlap; these are design parameters to be frozen after a development-only pilot, not benchmark-defined constants. The review and fixed instruction tokens are counted separately. For reproducibility, inference will use deterministic greedy decoding (\texttt{do\_sample=False}, one output sequence, and a maximum of 24 generated tokens), identical prompts except for the evidence content, and an identical deterministic category-to-ID parser. Invalid or unrecognized model outputs are counted as incorrect predictions, not silently removed. Since review-only has no evidence, it serves as a reference baseline, while the two evidence-bearing methods have identical maximum evidence budgets.

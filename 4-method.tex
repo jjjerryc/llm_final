@@ -1,5 +1,19 @@
 \section{Methodology (Optional)}
 \label{section:algorithm}
-Please use one paragraph to explain your high-level idea of the solution.
-If possible, draw an illustrative diagram to describe your high-level idea.
+Our pipeline has five steps. \textbf{(1) Establish baseline:} initialize the 4-bit Qwen2.5-3B-Instruct with one fixed five-class QLoRA adapter, verify mapping from generated category names to the five IDs in \texttt{classes.json}, and measure development macro F1. \textbf{(2) Prepare papers:} map each review to its paper, extract PDF text, clean obvious parsing artifacts, and segment into 256-token chunks with 32-token overlap in the initial setting. \textbf{(3) Retrieve:} apply the three input conditions, using BM25 with the review statement as the query and an initial common evidence-token budget of 1,024 tokens for the two evidence-bearing methods. \textbf{(4) Predict:} run one fixed classifier using greedy decoding (\texttt{do\_sample=False}, maximum 24 new tokens) across conditions; record failures rather than silently discarding instances. \textbf{(5) Analyze:} calculate macro/per-class F1, latency, token use, and qualitative error categories. If a classifier trained with one evidence format behaves inconsistently under the others, we will explicitly discuss distribution shift, avoid causal claims about retrieval quality, and consider matched retraining only as a documented extension.
 
+\begin{center}
+\fbox{\begin{minipage}{0.93\linewidth}\centering\small
+Review claim $x$ + linked paper $P$\\[3pt]
+$\Downarrow$\\[-1pt]
+PDF parsing and paper chunking\\[3pt]
+$\Downarrow$\\[-1pt]
+\begin{tabular}{c@{\quad}c@{\quad}c}
+Review only & First $B$ paper tokens & BM25 top chunks
+\end{tabular}\\[3pt]
+$\Downarrow$\\[-1pt]
+Fixed LLM classifier $f_{\theta}$ (five labels)\\[3pt]
+$\Downarrow$\\[-1pt]
+Macro F1, class-wise F1, token usage, latency
+\end{minipage}}
+\end{center}

@@ -1,10 +1,10 @@
 \section{Expected Contributions of Each Team Member}
-Please describe how you would collaborate with each other and specifically what each member would contribute to this project.
+The four members will share literature review, final writing, and presentation preparation. Responsibilities below are provisional; names should be replaced before submission.
 \begin{itemize}
-    \item Name of Member 1:
-    \item Name of Member 2:
-    \item Name of Member 3:
-    \item Name of Member 4:
+\item \textbf{Member 1 (baseline and model):} Set up the Qwen2.5-3B-Instruct five-class classifier with one QLoRA adapter; document inference prompts, the five category names and numeric IDs from \texttt{classes.json}, and reproducible evaluation settings.
+\item \textbf{Member 2 (data and PDF processing):} Audit dataset permissions and paper identifiers; implement review-to-paper mapping, PDF text extraction, chunking, and parsing-quality checks.
+\item \textbf{Member 3 (retrieval and experimental pipeline):} Implement BM25 indexing/ranking, leading truncation, fixed token budgets, and consistent batch inference across conditions.
+\item \textbf{Member 4 (evaluation and analysis):} Implement macro/per-class F1 and confusion matrices, track token/latency costs, perform error analysis, and coordinate experimental tables and presentation figures.
 \end{itemize}
-
-As you just kick off the project, it is very likely that you may need to reallocate the tasks among yourselves as you proceed. Please make sure that you  reach a consensus on the expected contributions. 
+\paragraph{Reproducibility and responsible reuse.}
+The team will document the provenance and permitted use of all datasets, pretrained weights, adapters, and code components, and will distinguish established baselines from new project contributions. All members will participate in reviewing experimental findings and validating the final submission.
